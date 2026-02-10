@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="srGradientFavicon" x1="18" y1="18" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#D9A7D8"/>
+      <stop offset="1" stop-color="#5A4D84"/>
+    </linearGradient>
+  </defs>
+  <text x="30" y="72" fill="url(#srGradientFavicon)" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="700">S</text>
+  <text x="66" y="86" fill="url(#srGradientFavicon)" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="700">R</text>
+  <path d="M18 66C8 78 9 98 24 108C45 121 66 111 82 101C94 93 103 90 112 92" stroke="url(#srGradientFavicon)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M18 56L21 62L27 62L22 66L24 72L18 68L12 72L14 66L9 62L15 62L18 56Z" fill="url(#srGradientFavicon)"/>
+  <path d="M96 104C98 108 97 114 91 116C86 118 80 116 78 112" stroke="url(#srGradientFavicon)" stroke-width="3" stroke-linecap="round"/>
+</svg>
