@@ -457,7 +457,12 @@ export default function BusinessPage() {
                 </div>
               </div>
               <Separator />
-              <RatingDistribution distribution={business.ratingDistribution} total={business.reviewCount} />
+              <RatingDistribution
+                distribution={business.ratingDistribution}
+                total={business.reviewCount}
+                selectedRating={reviewFilterRating}
+                onSelectRating={(value) => setReviewFilterRating(String(value))}
+              />
             </CardContent>
           </Card>
         </div>

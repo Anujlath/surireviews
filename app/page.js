@@ -301,7 +301,7 @@ export default async function HomePage({ searchParams }) {
             Help others make informed decisions by sharing your honest reviews.
           </p>
           <Button size="lg" variant="secondary" asChild className="w-full sm:w-auto">
-            <Link href="/companies">Write a Review</Link>
+            <Link href="/write-review">Write a Review</Link>
           </Button>
         </div>
         <div className="mt-10 border-t border-white/10 pt-6">

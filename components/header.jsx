@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, LogOut, LayoutDashboard, Shield, Menu } from 'lucide-react';
+import { User, LogOut, LayoutDashboard, Shield, Menu, PenSquare } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
 import { MobileSearchOverlay } from '@/components/mobile-search-overlay';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -21,6 +21,7 @@ export default function Header() {
   const { data: session, status } = useSession();
   const user = session?.user;
   const [country, setCountry] = useState('UK');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const syncCountry = (nextValue) => {
@@ -99,7 +100,7 @@ export default function Header() {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <MobileSearchOverlay />
-          <Sheet>
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
                 type="button"
@@ -116,39 +117,42 @@ export default function Header() {
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <div className="mt-6 flex flex-col gap-3">
-                <Link href="/write-review" className="text-sm font-medium hover:text-foreground">
+                <Link href="/write-review" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                   Write a review
                 </Link>
-                <Link href="/companies" className="text-sm font-medium hover:text-foreground">
+                <Link href="/companies" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                   Companies
                 </Link>
-                <Link href="/categories" className="text-sm font-medium hover:text-foreground">
+                <Link href="/categories" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                   Categories
                 </Link>
-                <Link href="/about" className="text-sm font-medium hover:text-foreground">
+                <Link href="/about" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                   About us
                 </Link>
-                <Link href="/how-it-works" className="text-sm font-medium hover:text-foreground">
+                <Link href="/how-it-works" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                   How it works
                 </Link>
                 {user ? (
                   <>
                     {user.role === 'ADMIN' && (
-                      <Link href="/admin" className="text-sm font-medium hover:text-foreground">
+                      <Link href="/admin" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                         Admin Panel
                       </Link>
                     )}
                     {user.role === 'BUSINESS' && (
-                      <Link href="/dashboard" className="text-sm font-medium hover:text-foreground">
+                      <Link href="/dashboard" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                         Dashboard
                       </Link>
                     )}
-                    <Link href="/profile" className="text-sm font-medium hover:text-foreground">
+                    <Link href="/profile" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                       Profile
                     </Link>
                     <button
                       type="button"
-                      onClick={() => signOut({ callbackUrl: '/' })}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        signOut({ callbackUrl: '/' });
+                      }}
                       className="text-left text-sm font-medium text-red-600"
                     >
                       Log out
@@ -156,10 +160,10 @@ export default function Header() {
                   </>
                 ) : (
                   <>
-                    <Link href="/login" className="text-sm font-medium hover:text-foreground">
+                    <Link href="/login" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                       Log in
                     </Link>
-                    <Link href="/login?mode=signup" className="text-sm font-medium hover:text-foreground">
+                    <Link href="/login?mode=signup" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                       Sign up
                     </Link>
                   </>
@@ -167,6 +171,7 @@ export default function Header() {
               </div>
             </SheetContent>
           </Sheet>
+          <div className="hidden md:block">
           {status === 'loading' ? (
             <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
           ) : user ? (
@@ -239,6 +244,18 @@ export default function Header() {
               </Button>
             </div>
           )}
+          </div>
+        </div>
+      </div>
+      <div className="border-t md:hidden">
+        <div className="container flex h-11 items-center text-sm">
+          <Link
+            href="/write-review"
+            className="group relative inline-flex h-9 items-center gap-2 overflow-hidden rounded-full border border-primary/30 bg-[linear-gradient(90deg,rgba(13,34,74,0.08)_0%,rgba(13,34,74,0.03)_45%,rgba(16,185,129,0.16)_100%)] px-4 text-[13px] font-semibold tracking-tight text-primary shadow-[0_4px_14px_rgba(13,34,74,0.18)] ring-1 ring-white/40 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_18px_rgba(13,34,74,0.22)] active:translate-y-0"
+          >
+            <PenSquare className="h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-[-8deg]" />
+            Write a review
+          </Link>
         </div>
       </div>
     </header>
