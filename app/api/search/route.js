@@ -2,27 +2,13 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { TRUSTPILOT_CATEGORIES } from '@/lib/categories';
-
-function getCountryTerms(country) {
-  const normalized = String(country || '').trim().toLowerCase();
-  if (!normalized) return [];
-  if (normalized === 'uk') {
-    return ['uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'];
-  }
-  if (normalized === 'usa') {
-    return ['usa', 'us', 'united states', 'united states of america'];
-  }
-  if (normalized === 'nigeria') {
-    return ['nigeria'];
-  }
-  return [normalized];
-}
+import { DEFAULT_COUNTRY, getCountryTerms } from '@/lib/country';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q')?.trim();
-    const selectedCountry = searchParams.get('country')?.trim() || 'UK';
+    const selectedCountry = searchParams.get('country')?.trim() || DEFAULT_COUNTRY;
     const countryTerms = getCountryTerms(selectedCountry);
     const countryFilter =
       countryTerms.length > 0

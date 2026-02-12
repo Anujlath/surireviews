@@ -13,6 +13,8 @@ enum Role {
   USER
   BUSINESS
   ADMIN
+  APPROVAL
+  MODERATOR
 }
 
 enum ReviewStatus {
@@ -22,6 +24,12 @@ enum ReviewStatus {
 }
 
 enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VerificationRequestStatus {
   PENDING
   APPROVED
   REJECTED
@@ -42,6 +50,7 @@ model User {
   reviews       Review[]
   claimedBusiness Business? @relation("BusinessOwner")
   claimRequests BusinessClaimRequest[]
+  verificationRequests BusinessVerificationRequest[] @relation("BusinessVerificationRequester")
   accounts      Account[]
   sessions      Session[]
 
@@ -109,6 +118,7 @@ model Business {
   // Relations
   claimedBy User?   @relation("BusinessOwner", fields: [claimedById], references: [id])
   claimRequests BusinessClaimRequest[]
+  verificationRequests BusinessVerificationRequest[]
   reviews   Review[]
   replies   Reply[]
 
@@ -136,6 +146,24 @@ model BusinessClaimRequest {
   @@index([userId])
   @@index([status])
   @@map("business_claim_requests")
+}
+
+model BusinessVerificationRequest {
+  id            String                    @id @default(uuid())
+  businessId    String                    @map("business_id")
+  requestedById String                    @map("requested_by_id")
+  status        VerificationRequestStatus @default(PENDING)
+  note          String?                   @db.Text
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  requestedBy User     @relation("BusinessVerificationRequester", fields: [requestedById], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([requestedById])
+  @@index([status])
+  @@map("business_verification_requests")
 }
 
 model Review {

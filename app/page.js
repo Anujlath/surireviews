@@ -8,6 +8,7 @@ import { StarRating } from '@/components/star-rating';
 import { SearchBar } from '@/components/search-bar';
 import { HomeCategoriesCarousel } from '@/components/home-categories-carousel';
 import { prisma } from '@/lib/prisma';
+import { DEFAULT_COUNTRY, getCountryTerms } from '@/lib/country';
 import {
   Search,
   TrendingUp,
@@ -17,16 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-function getCountryTerms(country) {
-  const normalized = String(country || '').trim().toLowerCase();
-  if (!normalized) return [];
-  if (normalized === 'uk') return ['uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'];
-  if (normalized === 'usa') return ['usa', 'us', 'united states', 'united states of america'];
-  if (normalized === 'nigeria') return ['nigeria'];
-  return [normalized];
-}
-
-async function getFeaturedBusinesses(country = 'UK') {
+async function getFeaturedBusinesses(country = DEFAULT_COUNTRY) {
   const countryTerms = getCountryTerms(country);
   const businesses = await prisma.business.findMany({
     where: countryTerms.length
@@ -71,7 +63,7 @@ async function getFeaturedBusinesses(country = 'UK') {
 
 export default async function HomePage({ searchParams }) {
   const cookieStore = cookies();
-  const selectedCountry = searchParams?.country || cookieStore.get('sr_country')?.value || 'UK';
+  const selectedCountry = searchParams?.country || cookieStore.get('sr_country')?.value || DEFAULT_COUNTRY;
   const featuredBusinesses = await getFeaturedBusinesses(selectedCountry);
 
   return (
@@ -126,8 +118,8 @@ export default async function HomePage({ searchParams }) {
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Top Rated</p>
                 <p className="mt-2 text-base font-semibold">Global Services Inc</p>
                 <p className="text-sm text-muted-foreground">Consulting, New York</p>
-                <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
-                  <Star className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600" />
+                <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-1 text-xs font-semibold text-violet-700">
+                  <Star className="h-3.5 w-3.5 fill-violet-600 text-violet-600" />
                   5.0 Excellent
                 </div>
               </div>

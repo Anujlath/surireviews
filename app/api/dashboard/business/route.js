@@ -29,6 +29,18 @@ export async function GET(request) {
           },
           orderBy: { createdAt: 'desc' },
         },
+        verificationRequests: {
+          where: { requestedById: user.id },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            status: true,
+            note: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
@@ -54,6 +66,7 @@ export async function GET(request) {
 
     return NextResponse.json({
       business,
+      verificationRequest: business.verificationRequests[0] || null,
       stats: {
         averageRating: parseFloat(avgRating.toFixed(1)),
         totalReviews: ratings.length,

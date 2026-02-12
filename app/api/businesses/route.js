@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { DEFAULT_COUNTRY, getCountryTerms } from '@/lib/country';
 
 function toRadians(value) {
   return (value * Math.PI) / 180;
@@ -20,21 +21,6 @@ function haversineDistanceKm(lat1, lon1, lat2, lon2) {
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return earthRadiusKm * c;
-}
-
-function getCountryTerms(country) {
-  const normalized = String(country || '').trim().toLowerCase();
-  if (!normalized) return [];
-  if (normalized === 'uk') {
-    return ['uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'];
-  }
-  if (normalized === 'usa') {
-    return ['usa', 'us', 'united states', 'united states of america'];
-  }
-  if (normalized === 'nigeria') {
-    return ['nigeria'];
-  }
-  return [normalized];
 }
 
 function slugify(value) {
@@ -73,7 +59,7 @@ export async function GET(request) {
     const location = searchParams.get('location')?.trim();
     const minRating = parseFloat(searchParams.get('minRating') || '0');
     const verifiedOnly = searchParams.get('verified') === 'true';
-    const country = searchParams.get('country')?.trim() || 'UK';
+    const country = searchParams.get('country')?.trim() || DEFAULT_COUNTRY;
     const sort = searchParams.get('sort') || 'most-relevant';
     const latitude = parseFloat(searchParams.get('lat') || '');
     const longitude = parseFloat(searchParams.get('lng') || '');

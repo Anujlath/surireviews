@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Building2, CheckCircle, FolderOpen, Loader2, Search, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { fetchPlacePredictions, geocodePlaceId } from '@/lib/google-maps-client';
+import { DEFAULT_COUNTRY, sanitizeCountryList } from '@/lib/country';
+import { detectClientCountry, fetchCountryOptions, getStoredCountry } from '@/lib/country-client';
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -39,7 +41,6 @@ function formatReviewCount(count) {
   return `${count} reviews`;
 }
 
-const countryOptions = ['UK', 'USA', 'Nigeria'];
 const countryStorageKey = 'sr:search-country';
 const countryCookieKey = 'sr_country';
 
@@ -54,7 +55,8 @@ export function SearchBar({ className, autoFocus = false }) {
   const [placesLoading, setPlacesLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [country, setCountry] = useState('UK');
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
+  const [countryOptions, setCountryOptions] = useState([DEFAULT_COUNTRY, 'UK', 'USA']);
   const [results, setResults] = useState({ companies: [], categories: [], locations: [], places: [] });
   const [dropdownStyle, setDropdownStyle] = useState({});
 
@@ -99,30 +101,34 @@ export function SearchBar({ className, autoFocus = false }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search || '');
-    const urlCountry = params.get('country');
-    if (urlCountry && countryOptions.includes(urlCountry)) {
-      setCountry(urlCountry);
-      return;
-    }
+    let mounted = true;
+    const loadCountries = async () => {
+      const params = new URLSearchParams(window.location.search || '');
+      const urlCountry = params.get('country');
+      const fetched = await fetchCountryOptions().catch(() => ({
+        countries: [DEFAULT_COUNTRY, 'UK', 'USA'],
+        defaultCountry: DEFAULT_COUNTRY,
+      }));
 
-    const stored = window.localStorage.getItem(countryStorageKey);
-    if (stored && countryOptions.includes(stored)) {
-      setCountry(stored);
-      return;
-    }
+      const options = sanitizeCountryList(
+        urlCountry ? [...(fetched.countries || []), urlCountry] : fetched.countries || []
+      );
+      const stored = getStoredCountry(countryStorageKey, countryCookieKey, options);
+      const detected = detectClientCountry();
+      const resolved =
+        (urlCountry && options.includes(urlCountry) && urlCountry) ||
+        stored ||
+        (options.includes(detected) ? detected : fetched.defaultCountry || DEFAULT_COUNTRY);
 
-    const cookieCountry = document.cookie
-      .split(';')
-      .map((item) => item.trim())
-      .find((item) => item.startsWith('sr_country='))
-      ?.split('=')[1];
-    if (cookieCountry) {
-      const decoded = decodeURIComponent(cookieCountry);
-      if (countryOptions.includes(decoded)) {
-        setCountry(decoded);
-      }
-    }
+      if (!mounted) return;
+      setCountryOptions(options);
+      setCountry(resolved);
+    };
+
+    void loadCountries();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -161,7 +167,7 @@ export function SearchBar({ className, autoFocus = false }) {
     if (typeof window === 'undefined') return;
     const onCountryChanged = (event) => {
       const next = event?.detail?.country;
-      if (next && countryOptions.includes(next)) {
+      if (next) {
         setCountry(next);
       }
     };
@@ -467,7 +473,7 @@ export function SearchBar({ className, autoFocus = false }) {
                                   <span>{formatReviewCount(company.reviewCount)}</span>
                                   <span>•</span>
                                   <span className="inline-flex items-center gap-1">
-                                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                                    <Star className="h-3 w-3 fill-violet-500 text-violet-500" />
                                     {company.averageRating}
                                   </span>
                                 </>

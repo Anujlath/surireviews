@@ -11,20 +11,20 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const claims = await prisma.businessClaimRequest.findMany({
+    const requests = await prisma.businessVerificationRequest.findMany({
       where: { status: 'PENDING' },
       include: {
-        business: { select: { id: true, name: true, slug: true, category: true } },
-        user: { select: { id: true, name: true, email: true } },
+        business: { select: { id: true, name: true, slug: true, category: true, verified: true } },
+        requestedBy: { select: { id: true, name: true, email: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(claims);
+    return NextResponse.json(requests);
   } catch (error) {
-    console.error('Error fetching claim requests:', error);
+    console.error('Error fetching verification requests:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch claim requests' },
+      { error: 'Failed to fetch verification requests' },
       { status: 500 }
     );
   }

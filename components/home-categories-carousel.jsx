@@ -51,7 +51,7 @@ export function HomeCategoriesCarousel() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex items-center justify-between gap-3 sm:gap-4">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">What are you looking for?</h2>
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">How can we help you today?</h2>
         <div className="flex items-center gap-3">
           <CarouselPrevious className="static hidden translate-y-0 rounded-full border border-border bg-background text-foreground hover:bg-muted sm:inline-flex" />
           <CarouselNext className="static hidden translate-y-0 rounded-full border border-primary/60 bg-background text-primary hover:bg-primary/5 sm:inline-flex" />

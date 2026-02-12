@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StarRating } from '@/components/star-rating';
 import { Loader2, Users, Building2, Star, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { isAdminRole } from '@/lib/roles';
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -18,9 +19,11 @@ export default function AdminPage() {
   const [stats, setStats] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [claims, setClaims] = useState([]);
+  const [verificationRequests, setVerificationRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [moderating, setModerating] = useState(null);
   const [claiming, setClaiming] = useState(null);
+  const [verifying, setVerifying] = useState(null);
 
   useEffect(() => {
     if (status === 'loading') {
@@ -29,7 +32,7 @@ export default function AdminPage() {
 
     if (status === 'unauthenticated') {
       router.push('/login');
-    } else if (session?.user?.role !== 'ADMIN') {
+    } else if (!isAdminRole(session?.user?.role)) {
       router.push('/');
     } else {
       fetchData();
@@ -39,9 +42,10 @@ export default function AdminPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [statsRes, reviewsRes] = await Promise.all([
+      const [statsRes, reviewsRes, verificationRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/reviews?status=PENDING'),
+        fetch('/api/admin/verification-requests'),
       ]);
       
       const statsData = await statsRes.json();
@@ -49,6 +53,8 @@ export default function AdminPage() {
       
       setStats(statsData.stats);
       setReviews(reviewsData);
+      const verificationData = await verificationRes.json();
+      setVerificationRequests(Array.isArray(verificationData) ? verificationData : []);
       const claimsRes = await fetch('/api/admin/claims');
       const claimsData = await claimsRes.json();
       setClaims(Array.isArray(claimsData) ? claimsData : []);
@@ -102,6 +108,25 @@ export default function AdminPage() {
     }
   };
 
+  const handleVerificationDecision = async (requestId, status) => {
+    setVerifying(requestId);
+    try {
+      const response = await fetch(`/api/admin/verification-requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        setVerificationRequests((prev) => prev.filter((item) => item.id !== requestId));
+      }
+    } catch (error) {
+      console.error('Error updating verification request:', error);
+    } finally {
+      setVerifying(null);
+    }
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="container py-12 flex items-center justify-center">
@@ -110,7 +135,7 @@ export default function AdminPage() {
     );
   }
 
-  if (session?.user?.role !== 'ADMIN') {
+  if (!isAdminRole(session?.user?.role)) {
     return null;
   }
 
@@ -219,6 +244,71 @@ export default function AdminPage() {
                           <Button
                             onClick={() => handleModerate(review.id, 'REJECTED')}
                             disabled={moderating === review.id}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Verification Requests</CardTitle>
+            <CardDescription>Approve or reject verified profile badge requests</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {verificationRequests.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No pending verification requests
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {verificationRequests.map((request) => (
+                  <Card key={request.id}>
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/company/${request.business.slug}`}
+                                className="font-semibold hover:underline"
+                              >
+                                {request.business.name}
+                              </Link>
+                              <Badge variant="secondary">{request.business.category}</Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Requested by {request.requestedBy.name || request.requestedBy.email}
+                            </div>
+                            {request.note && (
+                              <p className="text-sm text-muted-foreground">Note: {request.note}</p>
+                            )}
+                          </div>
+                          <Badge>{request.status}</Badge>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleVerificationDecision(request.id, 'APPROVED')}
+                            disabled={verifying === request.id}
+                            size="sm"
+                          >
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Approve
+                          </Button>
+                          <Button
+                            onClick={() => handleVerificationDecision(request.id, 'REJECTED')}
+                            disabled={verifying === request.id}
                             variant="destructive"
                             size="sm"
                           >

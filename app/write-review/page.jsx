@@ -19,8 +19,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { RatingInput } from '@/components/star-rating';
+import { DEFAULT_COUNTRY, sanitizeCountryList } from '@/lib/country';
+import { detectClientCountry, fetchCountryOptions, getStoredCountry } from '@/lib/country-client';
 
-const countryOptions = ['UK', 'USA', 'Nigeria'];
 const countryStorageKey = 'sr:search-country';
 const countryCookieKey = 'sr_country';
 
@@ -31,29 +32,14 @@ function formatReviewCount(count) {
   return `${count} reviews`;
 }
 
-function getStoredCountry() {
-  if (typeof window === 'undefined') return 'UK';
-  const stored = window.localStorage.getItem(countryStorageKey);
-  if (stored && countryOptions.includes(stored)) return stored;
-  const cookieCountry = document.cookie
-    .split(';')
-    .map((item) => item.trim())
-    .find((item) => item.startsWith('sr_country='))
-    ?.split('=')[1];
-  if (cookieCountry) {
-    const decoded = decodeURIComponent(cookieCountry);
-    if (countryOptions.includes(decoded)) return decoded;
-  }
-  return 'UK';
-}
-
 function WriteReviewPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const inputRef = useRef(null);
   const [query, setQuery] = useState('');
-  const [country, setCountry] = useState('UK');
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
+  const [countryOptions, setCountryOptions] = useState([DEFAULT_COUNTRY, 'UK', 'USA']);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
   const [topCompanies, setTopCompanies] = useState([]);
@@ -68,7 +54,26 @@ function WriteReviewPageContent() {
   const [formSuccess, setFormSuccess] = useState('');
 
   useEffect(() => {
-    setCountry(getStoredCountry());
+    let mounted = true;
+    const loadCountries = async () => {
+      const fetched = await fetchCountryOptions().catch(() => ({
+        countries: [DEFAULT_COUNTRY, 'UK', 'USA'],
+        defaultCountry: DEFAULT_COUNTRY,
+      }));
+      const options = sanitizeCountryList(fetched.countries || []);
+      const stored = getStoredCountry(countryStorageKey, countryCookieKey, options);
+      const detected = detectClientCountry();
+      const resolved =
+        stored || (options.includes(detected) ? detected : fetched.defaultCountry || DEFAULT_COUNTRY);
+      if (!mounted) return;
+      setCountryOptions(options);
+      setCountry(resolved);
+    };
+
+    void loadCountries();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -239,7 +244,7 @@ function WriteReviewPageContent() {
 
   return (
     <div className="min-h-screen bg-[#f6f7fb]">
-      <section className="bg-[radial-gradient(circle_at_top,#c9f8db_0%,#b7f7d2_42%,#aef3cc_100%)]">
+      <section className="bg-[radial-gradient(circle_at_top,#ede9fe_0%,#ddd6fe_42%,#c4b5fd_100%)]">
         <div className="container max-w-6xl px-4 py-16 md:py-20">
           <div className="grid gap-10 md:grid-cols-[1.2fr_1fr] md:items-center">
             <div className="space-y-5 text-center md:text-left">
@@ -346,7 +351,7 @@ function WriteReviewPageContent() {
                                         <span>{formatReviewCount(company.reviewCount)}</span>
                                         <span>•</span>
                                         <span className="inline-flex items-center gap-1">
-                                          <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                                          <Star className="h-3 w-3 fill-violet-500 text-violet-500" />
                                           {company.averageRating || 0}
                                         </span>
                                       </>
@@ -408,7 +413,7 @@ function WriteReviewPageContent() {
                   <p className="mt-3 font-semibold">{company.name}</p>
                   <p className="text-xs text-slate-500">{company.website || company.category}</p>
                   <p className="mt-2 flex items-center gap-1 text-xs text-slate-600">
-                    <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                    <Star className="h-3 w-3 fill-violet-500 text-violet-500" />
                     {company.averageRating || 0} · {formatReviewCount(company.reviewCount)}
                   </p>
                 </Card>

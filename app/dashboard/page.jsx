@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { StarRating } from '@/components/star-rating';
 import { RatingDistribution } from '@/components/rating-distribution';
-import { Loader2, Star, MessageSquare, AlertCircle, ExternalLink, Download, CheckCircle } from 'lucide-react';
+import { Loader2, Star, MessageSquare, AlertCircle, ExternalLink, Download, CheckCircle, ShieldCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function BusinessDashboard() {
@@ -34,6 +34,9 @@ export default function BusinessDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
+  const [verificationNote, setVerificationNote] = useState('');
+  const [requestingVerification, setRequestingVerification] = useState(false);
+  const [verificationFeedback, setVerificationFeedback] = useState('');
 
   useEffect(() => {
     if (status === 'loading') {
@@ -121,6 +124,31 @@ export default function BusinessDashboard() {
     }
   };
 
+  const handleRequestVerification = async (event) => {
+    event.preventDefault();
+    setRequestingVerification(true);
+    setVerificationFeedback('');
+    try {
+      const response = await fetch('/api/dashboard/business/verification-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: verificationNote }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setVerificationFeedback(data.error || 'Failed to create verification request');
+        return;
+      }
+      setVerificationNote('');
+      setVerificationFeedback('Verification request submitted. It is now pending admin review.');
+      await fetchDashboard();
+    } catch (_) {
+      setVerificationFeedback('Failed to create verification request');
+    } finally {
+      setRequestingVerification(false);
+    }
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="container py-12 flex items-center justify-center">
@@ -152,7 +180,9 @@ export default function BusinessDashboard() {
     return null;
   }
 
-  const { business, stats } = dashboard;
+  const { business, stats, verificationRequest } = dashboard;
+  const hasPendingVerification = verificationRequest?.status === 'PENDING';
+  const canRequestVerification = !business.verified && !hasPendingVerification;
 
   return (
     <div className="container py-8 max-w-7xl">
@@ -224,6 +254,56 @@ export default function BusinessDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {!business.verified && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5" />
+                Verified Profile Badge
+              </CardTitle>
+              <CardDescription>
+                Request verification to display a verified badge on your public profile.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {hasPendingVerification && (
+                <Alert>
+                  <AlertDescription>
+                    Your verification request is pending review.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {verificationRequest?.status === 'REJECTED' && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    Your previous verification request was rejected. You can submit a new request.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {canRequestVerification && (
+                <form onSubmit={handleRequestVerification} className="space-y-3">
+                  <Textarea
+                    value={verificationNote}
+                    onChange={(e) => setVerificationNote(e.target.value)}
+                    placeholder="Optional note for admin review (e.g. registration links, verification context)"
+                    rows={3}
+                    disabled={requestingVerification}
+                  />
+                  <Button type="submit" disabled={requestingVerification}>
+                    {requestingVerification ? 'Submitting...' : 'Request Verified Badge'}
+                  </Button>
+                </form>
+              )}
+
+              {verificationFeedback && (
+                <p className="text-sm text-muted-foreground">{verificationFeedback}</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Reviews */}
         <Card>

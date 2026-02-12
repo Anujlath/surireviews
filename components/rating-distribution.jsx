@@ -36,7 +36,7 @@ export function RatingDistribution({
           >
             <div className="flex items-center gap-1 w-16">
               <span className="text-sm font-medium">{rating}</span>
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <Star className="w-4 h-4 fill-violet-500 text-violet-500" />
             </div>
             <Progress value={percentage} className="flex-1 h-2" />
             <span className="text-sm text-muted-foreground w-12 text-right">

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Building2, CheckCircle, FolderOpen, Loader2, MapPin, Search, Star, X } from 'lucide-react';
+import { DEFAULT_COUNTRY, sanitizeCountryList } from '@/lib/country';
+import { detectClientCountry, fetchCountryOptions, getStoredCountry } from '@/lib/country-client';
 
 const suggestedSearches = [
   'Best educational institution',
@@ -14,7 +16,6 @@ const suggestedSearches = [
   'Womens clothing store in New York',
   'Furniture store in United States',
 ];
-const countryOptions = ['UK', 'USA', 'Nigeria'];
 const countryStorageKey = 'sr:search-country';
 const countryCookieKey = 'sr_country';
 
@@ -30,7 +31,8 @@ export function MobileSearchOverlay() {
   const pathname = usePathname();
   const inputRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [country, setCountry] = useState('UK');
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
+  const [countryOptions, setCountryOptions] = useState([DEFAULT_COUNTRY, 'UK', 'USA']);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState({ companies: [], categories: [], locations: [] });
@@ -43,11 +45,26 @@ export function MobileSearchOverlay() {
   const hasCoreResults = results.companies.length > 0;
 
   useEffect(() => {
-    const stored =
-      typeof window !== 'undefined' ? window.localStorage.getItem(countryStorageKey) : null;
-    if (stored && countryOptions.includes(stored)) {
-      setCountry(stored);
-    }
+    let mounted = true;
+    const loadCountries = async () => {
+      const fetched = await fetchCountryOptions().catch(() => ({
+        countries: [DEFAULT_COUNTRY, 'UK', 'USA'],
+        defaultCountry: DEFAULT_COUNTRY,
+      }));
+      const options = sanitizeCountryList(fetched.countries || []);
+      const stored = getStoredCountry(countryStorageKey, countryCookieKey, options);
+      const detected = detectClientCountry();
+      const resolved =
+        stored || (options.includes(detected) ? detected : fetched.defaultCountry || DEFAULT_COUNTRY);
+      if (!mounted) return;
+      setCountryOptions(options);
+      setCountry(resolved);
+    };
+
+    void loadCountries();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -163,7 +180,7 @@ export function MobileSearchOverlay() {
         <div className="fixed inset-0 z-[100] bg-white">
           <div className="border-b px-3 py-3">
             <form onSubmit={handleSubmit} className="relative">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-blue-600" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary" />
               <Input
                 ref={inputRef}
                 value={query}
@@ -175,7 +192,7 @@ export function MobileSearchOverlay() {
               <button
                 type="button"
                 onClick={closeOverlay}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-blue-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-primary"
                 aria-label="Close search"
               >
                 <X className="h-5 w-5" />
@@ -233,11 +250,11 @@ export function MobileSearchOverlay() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <p className="truncate font-medium">{company.name}</p>
-                            {company.verified && <CheckCircle className="h-4 w-4 flex-shrink-0 text-blue-600" />}
+                            {company.verified && <CheckCircle className="h-4 w-4 flex-shrink-0 text-primary" />}
                           </div>
                           <p className="text-xs text-muted-foreground">
                             {formatReviewCount(company.reviewCount)} | {company.averageRating || 0}
-                            <Star className="ml-1 inline h-3 w-3 fill-emerald-500 text-emerald-500" />
+                            <Star className="ml-1 inline h-3 w-3 fill-violet-500 text-violet-500" />
                           </p>
                         </div>
                       </button>

@@ -75,6 +75,9 @@ export default function Footer({ variant = 'site', embedded = false, transparent
           <Link href="/contact" className={isReview ? 'text-slate-200 transition hover:text-white' : 'text-muted-foreground transition hover:text-foreground'}>
             Contact
           </Link>
+          <Link href="/blog" className={isReview ? 'text-slate-200 transition hover:text-white' : 'text-muted-foreground transition hover:text-foreground'}>
+            Blog
+          </Link>
           <Link href="/privacy" className={isReview ? 'text-slate-200 transition hover:text-white' : 'text-muted-foreground transition hover:text-foreground'}>
             Privacy
           </Link>

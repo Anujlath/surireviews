@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { isAdminRole } from '@/lib/roles';
 
 export async function GET(request, { params }) {
   try {
@@ -58,7 +59,7 @@ export async function PATCH(request, { params }) {
     }
 
     // Check permissions: user can edit their own pending reviews, admin can edit any
-    if (review.userId !== user.id && user.role !== 'ADMIN') {
+    if (review.userId !== user.id && !isAdminRole(user.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -104,7 +105,7 @@ export async function DELETE(request, { params }) {
     }
 
     // Check permissions
-    if (review.userId !== user.id && user.role !== 'ADMIN') {
+    if (review.userId !== user.id && !isAdminRole(user.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

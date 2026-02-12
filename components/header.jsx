@@ -16,11 +16,13 @@ import { User, LogOut, LayoutDashboard, Shield, Menu, PenSquare } from 'lucide-r
 import { BrandLogo } from '@/components/brand-logo';
 import { MobileSearchOverlay } from '@/components/mobile-search-overlay';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { isAdminRole } from '@/lib/roles';
+import { DEFAULT_COUNTRY } from '@/lib/country';
 
 export default function Header() {
   const { data: session, status } = useSession();
   const user = session?.user;
-  const [country, setCountry] = useState('UK');
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -67,33 +69,39 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-primary/25 bg-primary text-primary-foreground backdrop-blur supports-[backdrop-filter]:bg-primary/95">
       <div className="container flex h-14 items-center justify-between sm:h-16">
         <div className="flex items-center gap-2 sm:gap-6">
           <Link href="/" className="flex items-center gap-2">
             <BrandLogo />
           </Link>
-          <span className="hidden sm:inline-flex rounded-full border bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+          <span className="hidden sm:inline-flex rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-2 py-1 text-[11px] font-medium text-primary-foreground/90">
             Country: {country}
           </span>
           <nav className="hidden md:flex items-center gap-6">
             <Link
               href="/write-review"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-medium text-primary-foreground/85 hover:text-primary-foreground transition-colors"
             >
               Write a review
             </Link>
             <Link
               href="/companies"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-medium text-primary-foreground/85 hover:text-primary-foreground transition-colors"
             >
               Companies
             </Link>
             <Link
               href="/categories"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm font-medium text-primary-foreground/85 hover:text-primary-foreground transition-colors"
             >
               Categories
+            </Link>
+            <Link
+              href="/blog"
+              className="text-sm font-medium text-primary-foreground/85 hover:text-primary-foreground transition-colors"
+            >
+              Blog
             </Link>
           </nav>
         </div>
@@ -126,6 +134,9 @@ export default function Header() {
                 <Link href="/categories" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                   Categories
                 </Link>
+                <Link href="/blog" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                  Blog
+                </Link>
                 <Link href="/about" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                   About us
                 </Link>
@@ -134,7 +145,7 @@ export default function Header() {
                 </Link>
                 {user ? (
                   <>
-                    {user.role === 'ADMIN' && (
+                    {isAdminRole(user.role) && (
                       <Link href="/admin" className="text-sm font-medium hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                         Admin Panel
                       </Link>
@@ -202,7 +213,7 @@ export default function Header() {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                {user.role === 'ADMIN' && (
+                {isAdminRole(user.role) && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin" className="cursor-pointer">
                       <Shield className="mr-2 h-4 w-4" />
@@ -251,7 +262,7 @@ export default function Header() {
         <div className="container flex h-11 items-center text-sm">
           <Link
             href="/write-review"
-            className="group relative inline-flex h-9 items-center gap-2 overflow-hidden rounded-full border border-primary/30 bg-[linear-gradient(90deg,rgba(13,34,74,0.08)_0%,rgba(13,34,74,0.03)_45%,rgba(16,185,129,0.16)_100%)] px-4 text-[13px] font-semibold tracking-tight text-primary shadow-[0_4px_14px_rgba(13,34,74,0.18)] ring-1 ring-white/40 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_18px_rgba(13,34,74,0.22)] active:translate-y-0"
+            className="group relative inline-flex h-9 items-center gap-2 overflow-hidden rounded-full border border-primary-foreground/30 bg-[linear-gradient(90deg,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0.04)_45%,rgba(221,214,254,0.32)_100%)] px-4 text-[13px] font-semibold tracking-tight text-primary-foreground shadow-[0_4px_14px_rgba(76,29,149,0.35)] ring-1 ring-white/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_18px_rgba(76,29,149,0.4)] active:translate-y-0"
           >
             <PenSquare className="h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-[-8deg]" />
             Write a review

@@ -23,9 +23,9 @@ export function StarRating({ rating, maxRating = 5, size = 'md', showNumber = fa
             className={cn(
               sizes[size],
               isFilled
-                ? 'fill-yellow-400 text-yellow-400'
+                ? 'fill-violet-500 text-violet-500'
                 : isHalf
-                ? 'fill-yellow-400/50 text-yellow-400'
+                ? 'fill-violet-500/50 text-violet-500'
                 : 'fill-gray-200 text-gray-200'
             )}
           />
@@ -61,8 +61,8 @@ export function RatingInput({ value, onChange, size = 'lg' }) {
             className={cn(
               sizes[size],
               rating <= value
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'fill-gray-200 text-gray-200 hover:text-yellow-200'
+                ? 'fill-violet-500 text-violet-500'
+                : 'fill-gray-200 text-gray-200 hover:text-violet-300'
             )}
           />
         </button>

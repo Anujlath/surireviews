@@ -21,6 +21,8 @@ import {
 import { StarRating } from '@/components/star-rating';
 import { TRUSTPILOT_CATEGORY_NAMES } from '@/lib/categories';
 import { fetchPlacePredictions, geocodePlaceId, reverseGeocode } from '@/lib/google-maps-client';
+import { DEFAULT_COUNTRY, sanitizeCountryList } from '@/lib/country';
+import { detectClientCountry, fetchCountryOptions, getStoredCountry } from '@/lib/country-client';
 import { CheckCircle, Loader2, LocateFixed, MapPin, PlusCircle, Search } from 'lucide-react';
 import {
   Pagination,
@@ -41,7 +43,6 @@ const sortOptions = [
   { value: 'recently-reviewed', label: 'Recently reviewed' },
   { value: 'newest', label: 'Newest' },
 ];
-const countryOptions = ['UK', 'USA', 'Nigeria'];
 const countryStorageKey = 'sr:search-country';
 const countryCookieKey = 'sr_country';
 
@@ -75,7 +76,8 @@ function CompaniesPageContent() {
   const [sortBy, setSortBy] = useState('most-relevant');
   const [minRating, setMinRating] = useState('0');
   const [verifiedOnly, setVerifiedOnly] = useState('false');
-  const [countryFilter, setCountryFilter] = useState('UK');
+  const [countryFilter, setCountryFilter] = useState(DEFAULT_COUNTRY);
+  const [countryOptions, setCountryOptions] = useState([DEFAULT_COUNTRY, 'UK', 'USA']);
   const [radiusKm, setRadiusKm] = useState('25');
   const [geoLat, setGeoLat] = useState(null);
   const [geoLng, setGeoLng] = useState(null);
@@ -110,7 +112,7 @@ function CompaniesPageContent() {
         : searchParams;
     const urlSearch = sourceParams.get('search') || '';
     const urlLocation = sourceParams.get('location') || '';
-    const urlCountry = sourceParams.get('country') || 'UK';
+    const urlCountry = sourceParams.get('country') || DEFAULT_COUNTRY;
     const urlCategory = sourceParams.get('category') || 'all';
     const urlSort = sourceParams.get('sort') || 'most-relevant';
     const urlMinRating = sourceParams.get('minRating') || '0';
@@ -236,12 +238,38 @@ function CompaniesPageContent() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const urlCountry = searchParams.get('country');
-    if (urlCountry) return;
-    const stored = window.localStorage.getItem(countryStorageKey);
-    if (stored && countryOptions.includes(stored) && stored !== countryFilter) {
-      setCountryFilter(stored);
-    }
+    let mounted = true;
+    const loadCountries = async () => {
+      const fetched = await fetchCountryOptions().catch(() => ({
+        countries: [DEFAULT_COUNTRY, 'UK', 'USA'],
+        defaultCountry: DEFAULT_COUNTRY,
+      }));
+
+      const urlCountry = searchParams.get('country');
+      const options = sanitizeCountryList(
+        urlCountry ? [...(fetched.countries || []), urlCountry] : fetched.countries || []
+      );
+      const stored = getStoredCountry(countryStorageKey, countryCookieKey, options);
+      const detected = detectClientCountry();
+
+      if (!mounted) return;
+      setCountryOptions(options);
+
+      if (!urlCountry && !stored && !initialized.current) {
+        const next = options.includes(detected) ? detected : fetched.defaultCountry || DEFAULT_COUNTRY;
+        setCountryFilter(next);
+        return;
+      }
+
+      if (!urlCountry && stored && stored !== countryFilter) {
+        setCountryFilter(stored);
+      }
+    };
+
+    void loadCountries();
+    return () => {
+      mounted = false;
+    };
   }, [searchParams, countryFilter]);
 
   useEffect(() => {
@@ -312,7 +340,7 @@ function CompaniesPageContent() {
     if (sortBy !== 'most-relevant') params.set('sort', sortBy);
     if (minRating !== '0') params.set('minRating', minRating);
     if (verifiedOnly === 'true') params.set('verified', 'true');
-    if (countryFilter && countryFilter !== 'UK') params.set('country', countryFilter);
+    if (countryFilter && countryFilter !== DEFAULT_COUNTRY) params.set('country', countryFilter);
     if (radiusKm !== '25') params.set('radiusKm', radiusKm);
     if (page > 1) params.set('page', String(page));
     if (Number.isFinite(geoLat) && Number.isFinite(geoLng)) {
@@ -385,7 +413,7 @@ function CompaniesPageContent() {
     if (!shouldOpenAdd) return;
 
     const prefillName = searchParams.get('name') || '';
-    const prefillCountry = searchParams.get('country') || 'UK';
+    const prefillCountry = searchParams.get('country') || DEFAULT_COUNTRY;
     setNewCompanyName(prefillName);
     setNewCompanyCountry(prefillCountry);
     setAddDialogOpen(true);
@@ -393,7 +421,7 @@ function CompaniesPageContent() {
 
   useEffect(() => {
     if (!newCompanyCountry) {
-      setNewCompanyCountry(countryFilter || 'UK');
+      setNewCompanyCountry(countryFilter || DEFAULT_COUNTRY);
     }
   }, [countryFilter, newCompanyCountry]);
 
@@ -530,7 +558,7 @@ function CompaniesPageContent() {
     setNewCompanyWebsite('');
     setNewCompanyCity('');
     setNewCompanyState('');
-    setNewCompanyCountry(countryFilter || 'UK');
+    setNewCompanyCountry(countryFilter || DEFAULT_COUNTRY);
     setNewCompanyDescription('');
     setAddCompanyError('');
   };
@@ -557,7 +585,7 @@ function CompaniesPageContent() {
           website: newCompanyWebsite.trim() || null,
           city: newCompanyCity.trim() || null,
           state: newCompanyState.trim() || null,
-          country: (newCompanyCountry || countryFilter || 'UK').trim(),
+          country: (newCompanyCountry || countryFilter || DEFAULT_COUNTRY).trim(),
           description: newCompanyDescription.trim() || null,
         }),
       });
@@ -836,19 +864,18 @@ function CompaniesPageContent() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Category</label>
-                      <Input
-                        value={newCompanyCategory}
-                        onChange={(event) => setNewCompanyCategory(event.target.value)}
-                        placeholder="Search or type a category"
-                        list="sr-category-options"
-                        required
-                        disabled={addingCompany}
-                      />
-                      <datalist id="sr-category-options">
-                        {TRUSTPILOT_CATEGORY_NAMES.map((item) => (
-                          <option key={item} value={item} />
-                        ))}
-                      </datalist>
+                      <Select value={newCompanyCategory} onValueChange={setNewCompanyCategory} disabled={addingCompany}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TRUSTPILOT_CATEGORY_NAMES.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {item}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Website (optional)</label>

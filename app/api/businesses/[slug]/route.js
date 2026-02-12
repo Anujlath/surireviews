@@ -1,18 +1,10 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { DEFAULT_COUNTRY, getCountryTerms } from '@/lib/country';
 
 function normalize(value) {
   return String(value || '').trim().toLowerCase();
-}
-
-function getCountryTerms(country) {
-  const normalized = normalize(country);
-  if (!normalized) return [];
-  if (normalized === 'uk') return ['uk', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'];
-  if (normalized === 'usa') return ['usa', 'us', 'united states', 'united states of america'];
-  if (normalized === 'nigeria') return ['nigeria'];
-  return [normalized];
 }
 
 function matchesCountry(countryValue, selectedCountry) {
@@ -28,7 +20,7 @@ export async function GET(request, { params }) {
     const selectedCountry =
       new URL(request.url).searchParams.get('country') ||
       request.cookies.get('sr_country')?.value ||
-      'UK';
+      DEFAULT_COUNTRY;
 
     const business = await prisma.business.findUnique({
       where: { slug },

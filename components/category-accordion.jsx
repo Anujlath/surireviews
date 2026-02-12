@@ -57,14 +57,10 @@ const ICONS_BY_GROUP = {
 };
 
 const HEADER_STYLES = [
-  'bg-amber-100',
-  'bg-rose-200',
-  'bg-emerald-200',
-  'bg-pink-200',
-  'bg-lime-200',
-  'bg-sky-200',
-  'bg-orange-200',
-  'bg-emerald-100',
+  'bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-900',
+  'bg-gradient-to-r from-indigo-100 to-violet-100 text-indigo-900',
+  'bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-900',
+  'bg-gradient-to-r from-fuchsia-100 to-pink-100 text-fuchsia-900',
 ];
 
 function CategoryRow({ group, subcategories, totalCount }) {
@@ -87,7 +83,7 @@ function CategoryRow({ group, subcategories, totalCount }) {
             <span className="flex flex-col">
               <span>{group.name}</span>
               <span className="text-xs font-normal text-muted-foreground">
-                {totalCount} companies
+                {totalCount > 0 ? `${totalCount} companies` : 'Explore categories'}
               </span>
             </span>
           </span>
@@ -106,7 +102,7 @@ function CategoryRow({ group, subcategories, totalCount }) {
               className="flex items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm transition hover:border-foreground/20 hover:shadow-sm"
             >
               <span>{item.name}</span>
-              <span className="text-xs text-muted-foreground">{item.count}</span>
+              {item.count > 0 ? <span className="text-xs text-muted-foreground">{item.count}</span> : null}
             </Link>
           ))}
         </div>
@@ -131,11 +127,13 @@ function CategoryCard({ group, subcategories, totalCount, headerClass }) {
             className="flex items-center justify-between px-4 py-3 text-sm transition hover:bg-muted/30"
           >
             <span>{item.name}</span>
-            <span className="text-xs text-muted-foreground">{item.count}</span>
+            {item.count > 0 ? <span className="text-xs text-muted-foreground">{item.count}</span> : null}
           </Link>
         ))}
       </div>
-      <div className="px-4 py-3 text-xs text-muted-foreground">Total companies: {totalCount}</div>
+      {totalCount > 0 ? (
+        <div className="px-4 py-3 text-xs text-muted-foreground">Total companies: {totalCount}</div>
+      ) : null}
     </div>
   );
 }
