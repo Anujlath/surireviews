@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StarRating } from '@/components/star-rating';
 import { Loader2, Users, Building2, Star, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -20,7 +19,16 @@ export default function AdminPage() {
   const [reviews, setReviews] = useState([]);
   const [claims, setClaims] = useState([]);
   const [verificationRequests, setVerificationRequests] = useState([]);
+  const [usersList, setUsersList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activePanel, setActivePanel] = useState('reviews');
+  const [reviewStatusFilter, setReviewStatusFilter] = useState('PENDING');
+  const [approvedPage, setApprovedPage] = useState(1);
+  const [approvedTotalPages, setApprovedTotalPages] = useState(1);
+  const [approvedTotalReviews, setApprovedTotalReviews] = useState(0);
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersTotalPages, setUsersTotalPages] = useState(1);
+  const [usersTotalCount, setUsersTotalCount] = useState(0);
   const [moderating, setModerating] = useState(null);
   const [claiming, setClaiming] = useState(null);
   const [verifying, setVerifying] = useState(null);
@@ -37,27 +45,48 @@ export default function AdminPage() {
     } else {
       fetchData();
     }
-  }, [session, status, router]);
+  }, [session, status, router, reviewStatusFilter, approvedPage, activePanel, usersPage]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [statsRes, reviewsRes, verificationRes] = await Promise.all([
+      const reviewsUrl =
+        reviewStatusFilter === 'APPROVED'
+          ? `/api/reviews?status=APPROVED&paginate=1&page=${approvedPage}&pageSize=10`
+          : '/api/reviews?status=PENDING';
+      const usersUrl = `/api/admin/users?page=${usersPage}&pageSize=10`;
+
+      const [statsRes, reviewsRes, verificationRes, usersRes] = await Promise.all([
         fetch('/api/admin/stats'),
-        fetch('/api/reviews?status=PENDING'),
+        fetch(reviewsUrl),
         fetch('/api/admin/verification-requests'),
+        activePanel === 'users' ? fetch(usersUrl) : Promise.resolve(null),
       ]);
       
       const statsData = await statsRes.json();
       const reviewsData = await reviewsRes.json();
       
       setStats(statsData.stats);
-      setReviews(reviewsData);
+      if (reviewStatusFilter === 'APPROVED') {
+        setReviews(Array.isArray(reviewsData?.items) ? reviewsData.items : []);
+        setApprovedTotalPages(reviewsData?.pagination?.totalPages || 1);
+        setApprovedTotalReviews(reviewsData?.pagination?.total || 0);
+      } else {
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+        setApprovedTotalPages(1);
+        setApprovedTotalReviews(0);
+      }
       const verificationData = await verificationRes.json();
       setVerificationRequests(Array.isArray(verificationData) ? verificationData : []);
       const claimsRes = await fetch('/api/admin/claims');
       const claimsData = await claimsRes.json();
       setClaims(Array.isArray(claimsData) ? claimsData : []);
+      if (usersRes) {
+        const usersData = await usersRes.json();
+        setUsersList(Array.isArray(usersData?.items) ? usersData.items : []);
+        setUsersTotalPages(usersData?.pagination?.totalPages || 1);
+        setUsersTotalCount(usersData?.pagination?.total || 0);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -127,6 +156,27 @@ export default function AdminPage() {
     }
   };
 
+  const scrollToSection = (id) => {
+    if (typeof window === 'undefined') return;
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const selectReviewFilter = (status) => {
+    setActivePanel('reviews');
+    setReviewStatusFilter(status);
+    if (status === 'APPROVED') setApprovedPage(1);
+    scrollToSection('reviews-list');
+  };
+
+  const openUsersPanel = () => {
+    setActivePanel('users');
+    setUsersPage(1);
+    scrollToSection('users-list');
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="container py-12 flex items-center justify-center">
@@ -151,55 +201,137 @@ export default function AdminPage() {
         {/* Stats */}
         {stats && (
           <div className="grid md:grid-cols-4 gap-4">
-            <Card>
+            <Card
+              className="cursor-pointer transition-shadow hover:shadow-md"
+              onClick={openUsersPanel}
+            >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                <div className="text-2xl font-bold hover:underline">{stats.totalUsers}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card
+              className="cursor-pointer transition-shadow hover:shadow-md"
+              onClick={() => router.push('/companies')}
+            >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Total Businesses</CardTitle>
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.totalBusinesses}</div>
+                <div className="text-2xl font-bold hover:underline">{stats.totalBusinesses}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card
+              className="cursor-pointer transition-shadow hover:shadow-md"
+              onClick={() => selectReviewFilter('APPROVED')}
+            >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Approved Reviews</CardTitle>
                 <Star className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.totalReviews}</div>
+                <div className="text-2xl font-bold hover:underline">{stats.totalReviews}</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card
+              className="cursor-pointer transition-shadow hover:shadow-md"
+              onClick={() => selectReviewFilter('PENDING')}
+            >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.pendingReviews}</div>
+                <div className="text-2xl font-bold hover:underline">{stats.pendingReviews}</div>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Pending Reviews */}
-        <Card>
+        <Card id="users-list">
           <CardHeader>
-            <CardTitle>Pending Reviews</CardTitle>
-            <CardDescription>Review and moderate submitted reviews</CardDescription>
+            <CardTitle>Users</CardTitle>
+            <CardDescription>All registered users</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {activePanel !== 'users' ? (
+              <div className="text-center py-6 text-sm text-muted-foreground">
+                Click <span className="font-medium">Total Users</span> to load user list.
+              </div>
+            ) : usersList.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No users found
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {usersList.map((user) => (
+                  <Card key={user.id}>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">{user.name || 'Unnamed user'}</p>
+                          <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">{user.role}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+            {activePanel === 'users' && usersTotalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Page {usersPage} of {usersTotalPages} ({usersTotalCount} total)
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUsersPage((prev) => Math.max(1, prev - 1))}
+                    disabled={usersPage <= 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUsersPage((prev) => Math.min(usersTotalPages, prev + 1))}
+                    disabled={usersPage >= usersTotalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Pending Reviews */}
+        <Card id="reviews-list">
+          <CardHeader>
+            <CardTitle>{reviewStatusFilter === 'APPROVED' ? 'Approved Reviews' : 'Pending Reviews'}</CardTitle>
+            <CardDescription>
+              {reviewStatusFilter === 'APPROVED'
+                ? 'View approved reviews'
+                : 'Review and moderate submitted reviews'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {reviews.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                No pending reviews
+                {reviewStatusFilter === 'APPROVED' ? 'No approved reviews' : 'No pending reviews'}
               </div>
             ) : (
               <div className="space-y-4">
@@ -232,35 +364,66 @@ export default function AdminPage() {
                           <p className="text-muted-foreground">{review.content}</p>
                         </div>
 
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleModerate(review.id, 'APPROVED')}
-                            disabled={moderating === review.id}
-                            size="sm"
-                          >
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Approve
-                          </Button>
-                          <Button
-                            onClick={() => handleModerate(review.id, 'REJECTED')}
-                            disabled={moderating === review.id}
-                            variant="destructive"
-                            size="sm"
-                          >
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Reject
-                          </Button>
-                        </div>
+                        {reviewStatusFilter === 'PENDING' && (
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleModerate(review.id, 'APPROVED')}
+                              disabled={moderating === review.id}
+                              size="sm"
+                            >
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Approve
+                            </Button>
+                            <Button
+                              onClick={() => handleModerate(review.id, 'REJECTED')}
+                              disabled={moderating === review.id}
+                              variant="destructive"
+                              size="sm"
+                            >
+                              <XCircle className="mr-2 h-4 w-4" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
+            {reviewStatusFilter === 'APPROVED' && approvedTotalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Page {approvedPage} of {approvedTotalPages} ({approvedTotalReviews} total)
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setApprovedPage((prev) => Math.max(1, prev - 1))}
+                    disabled={approvedPage <= 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setApprovedPage((prev) => Math.min(approvedTotalPages, prev + 1))
+                    }
+                    disabled={approvedPage >= approvedTotalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="verification-requests">
           <CardHeader>
             <CardTitle>Verification Requests</CardTitle>
             <CardDescription>Approve or reject verified profile badge requests</CardDescription>
@@ -325,7 +488,7 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="claim-requests">
           <CardHeader>
             <CardTitle>Claim Requests</CardTitle>
             <CardDescription>Approve or reject business claim requests</CardDescription>

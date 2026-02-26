@@ -1,4 +1,4 @@
-# Surireviews - Complete Review Platform
+# SuriReviews - Complete Review Platform
 
 A production-ready Trustpilot-style review platform built with Next.js, PostgreSQL, and modern web technologies.
 

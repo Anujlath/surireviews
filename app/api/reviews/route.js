@@ -9,11 +9,62 @@ export async function GET(request) {
     const businessId = searchParams.get('businessId');
     const userId = searchParams.get('userId');
     const status = searchParams.get('status');
+    const paginate = searchParams.get('paginate') === '1';
+    const pageParam = Number(searchParams.get('page') || 1);
+    const pageSizeParam = Number(searchParams.get('pageSize') || 10);
 
     const where = {};
     if (businessId) where.businessId = businessId;
     if (userId) where.userId = userId;
     if (status) where.status = status;
+
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const pageSize =
+      Number.isFinite(pageSizeParam) && pageSizeParam > 0 && pageSizeParam <= 50
+        ? pageSizeParam
+        : 10;
+    const skip = (page - 1) * pageSize;
+
+    if (paginate) {
+      const [total, reviews] = await Promise.all([
+        prisma.review.count({ where }),
+        prisma.review.findMany({
+          where,
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
+            },
+            business: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+            reply: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: pageSize,
+        }),
+      ]);
+
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      return NextResponse.json({
+        items: reviews,
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages,
+        },
+      });
+    }
 
     const reviews = await prisma.review.findMany({
       where,

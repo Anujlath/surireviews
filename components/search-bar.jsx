@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building2, CheckCircle, FolderOpen, Loader2, Search, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getRatingColorClasses } from '@/lib/rating-colors';
 import { fetchPlacePredictions, geocodePlaceId } from '@/lib/google-maps-client';
 import { DEFAULT_COUNTRY, sanitizeCountryList } from '@/lib/country';
 import { detectClientCountry, fetchCountryOptions, getStoredCountry } from '@/lib/country-client';
@@ -473,7 +474,7 @@ export function SearchBar({ className, autoFocus = false }) {
                                   <span>{formatReviewCount(company.reviewCount)}</span>
                                   <span>•</span>
                                   <span className="inline-flex items-center gap-1">
-                                    <Star className="h-3 w-3 fill-violet-500 text-violet-500" />
+                                    <Star className={cn('h-3 w-3', getRatingColorClasses(company.averageRating).solid)} />
                                     {company.averageRating}
                                   </span>
                                 </>

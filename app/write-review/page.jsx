@@ -21,6 +21,8 @@ import {
 import { RatingInput } from '@/components/star-rating';
 import { DEFAULT_COUNTRY, sanitizeCountryList } from '@/lib/country';
 import { detectClientCountry, fetchCountryOptions, getStoredCountry } from '@/lib/country-client';
+import { cn } from '@/lib/utils';
+import { getRatingColorClasses } from '@/lib/rating-colors';
 
 const countryStorageKey = 'sr:search-country';
 const countryCookieKey = 'sr_country';
@@ -351,7 +353,7 @@ function WriteReviewPageContent() {
                                         <span>{formatReviewCount(company.reviewCount)}</span>
                                         <span>•</span>
                                         <span className="inline-flex items-center gap-1">
-                                          <Star className="h-3 w-3 fill-violet-500 text-violet-500" />
+                                          <Star className={cn('h-3 w-3', getRatingColorClasses(company.averageRating).solid)} />
                                           {company.averageRating || 0}
                                         </span>
                                       </>
@@ -413,7 +415,7 @@ function WriteReviewPageContent() {
                   <p className="mt-3 font-semibold">{company.name}</p>
                   <p className="text-xs text-slate-500">{company.website || company.category}</p>
                   <p className="mt-2 flex items-center gap-1 text-xs text-slate-600">
-                    <Star className="h-3 w-3 fill-violet-500 text-violet-500" />
+                    <Star className={cn('h-3 w-3', getRatingColorClasses(company.averageRating).solid)} />
                     {company.averageRating || 0} · {formatReviewCount(company.reviewCount)}
                   </p>
                 </Card>

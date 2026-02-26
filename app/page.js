@@ -150,7 +150,7 @@ export default async function HomePage({ searchParams }) {
       {/* Features Section */}
       <section className="py-16 px-4 bg-muted/50">
         <div className="container max-w-6xl">
-          <h2 className="text-3xl font-bold text-center mb-6 sm:mb-12">Why Surireviews?</h2>
+          <h2 className="text-3xl font-bold text-center mb-6 sm:mb-12">Why SuriReviews?</h2>
           <div className="hidden md:grid md:grid-cols-3 gap-8">
             <Card className="h-full">
               <CardHeader className="h-full">

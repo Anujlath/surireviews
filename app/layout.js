@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] });
 const sora = Sora({ subsets: ['latin'], variable: '--font-brand', weight: ['600', '700'] });
 
 export const metadata = {
-  title: 'Surireviews - Review Platform',
+  title: 'SuriReviews - Review Platform',
   description: 'A Trustpilot-style review platform for businesses',
 };
 

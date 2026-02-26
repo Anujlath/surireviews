@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Building2, CheckCircle, FolderOpen, Loader2, MapPin, Search, Star, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { DEFAULT_COUNTRY, sanitizeCountryList } from '@/lib/country';
 import { detectClientCountry, fetchCountryOptions, getStoredCountry } from '@/lib/country-client';
+import { getRatingColorClasses } from '@/lib/rating-colors';
 
 const suggestedSearches = [
   'Best educational institution',
@@ -254,7 +256,7 @@ export function MobileSearchOverlay() {
                           </div>
                           <p className="text-xs text-muted-foreground">
                             {formatReviewCount(company.reviewCount)} | {company.averageRating || 0}
-                            <Star className="ml-1 inline h-3 w-3 fill-violet-500 text-violet-500" />
+                            <Star className={cn('ml-1 inline h-3 w-3', getRatingColorClasses(company.averageRating).solid)} />
                           </p>
                         </div>
                       </button>

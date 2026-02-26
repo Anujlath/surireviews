@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle } from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 function LoginContent() {
   const router = useRouter();
@@ -31,6 +32,9 @@ function LoginContent() {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupName, setSignupName] = useState('');
   const [signupRole, setSignupRole] = useState('USER');
+  const [signupOtp, setSignupOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [signupInfo, setSignupInfo] = useState('');
   const callbackUrl = searchParams.get('callbackUrl') || '/';
 
   useEffect(() => {
@@ -85,6 +89,19 @@ function LoginContent() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setSignupInfo('');
+
+    if (!otpSent) {
+      setError('Please send OTP first');
+      setIsLoading(false);
+      return;
+    }
+
+    if (signupOtp.length !== 6) {
+      setError('Please enter the 6-digit OTP');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/auth/signup', {
@@ -95,6 +112,7 @@ function LoginContent() {
           password: signupPassword,
           name: signupName,
           role: signupRole,
+          otp: signupOtp,
         }),
       });
 
@@ -120,6 +138,39 @@ function LoginContent() {
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    setIsLoading(true);
+    setError('');
+    setSignupInfo('');
+
+    try {
+      const response = await fetch('/api/auth/signup/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: signupEmail,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || 'Failed to send OTP');
+        return;
+      }
+
+      setOtpSent(true);
+      if (data.otpDevOnly) {
+        setSignupInfo(`OTP generated (dev only): ${data.otpDevOnly}`);
+      } else {
+        setSignupInfo('OTP sent to your email. It expires in 10 minutes.');
+      }
+    } catch (err) {
+      setError('Could not send OTP. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -245,6 +296,11 @@ function LoginContent() {
                       <AlertDescription>{error}</AlertDescription>
                     </Alert>
                   )}
+                  {signupInfo && (
+                    <Alert>
+                      <AlertDescription>{signupInfo}</AlertDescription>
+                    </Alert>
+                  )}
                   
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Name</Label>
@@ -265,10 +321,47 @@ function LoginContent() {
                       type="email"
                       placeholder="you@example.com"
                       value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
+                      onChange={(e) => {
+                        setSignupEmail(e.target.value);
+                        setOtpSent(false);
+                        setSignupOtp('');
+                        setSignupInfo('');
+                      }}
                       required
                       disabled={isLoading}
                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Email Verification OTP</Label>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <InputOTP
+                        maxLength={6}
+                        value={signupOtp}
+                        onChange={setSignupOtp}
+                        disabled={!otpSent || isLoading}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleSendOtp}
+                        disabled={isLoading || !signupEmail}
+                      >
+                        {otpSent ? 'Resend OTP' : 'Send OTP'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Use a real inbox. Placeholder/disposable emails are blocked.
+                    </p>
                   </div>
                   
                   <div className="space-y-2">
@@ -296,7 +389,7 @@ function LoginContent() {
                     </Select>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || !otpSent}>
                     {isLoading ? 'Creating account...' : 'Create account'}
                   </Button>
 

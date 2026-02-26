@@ -651,7 +651,7 @@ export default function BusinessPage() {
               <p className="flex items-start gap-2">
                 <ShieldCheck className="h-4 w-4 mt-0.5 text-muted-foreground" />
                 {business.verified
-                  ? 'Profile is verified on Surireviews.'
+                  ? 'Profile is verified on SuriReviews.'
                   : 'Profile is not yet marked as verified.'}
               </p>
             </CardContent>

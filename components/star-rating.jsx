@@ -2,6 +2,7 @@
 
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getRatingColorClasses } from '@/lib/rating-colors';
 
 export function StarRating({ rating, maxRating = 5, size = 'md', showNumber = false, className }) {
   const sizes = {
@@ -10,6 +11,7 @@ export function StarRating({ rating, maxRating = 5, size = 'md', showNumber = fa
     lg: 'w-6 h-6',
     xl: 'w-8 h-8',
   };
+  const colors = getRatingColorClasses(rating);
 
   return (
     <div className={cn('flex items-center gap-1', className)}>
@@ -23,9 +25,9 @@ export function StarRating({ rating, maxRating = 5, size = 'md', showNumber = fa
             className={cn(
               sizes[size],
               isFilled
-                ? 'fill-violet-500 text-violet-500'
+                ? colors.solid
                 : isHalf
-                ? 'fill-violet-500/50 text-violet-500'
+                ? colors.half
                 : 'fill-gray-200 text-gray-200'
             )}
           />
@@ -47,6 +49,7 @@ export function RatingInput({ value, onChange, size = 'lg' }) {
     lg: 'w-8 h-8',
     xl: 'w-10 h-10',
   };
+  const colors = getRatingColorClasses(value);
 
   return (
     <div className="flex items-center gap-1">
@@ -61,8 +64,8 @@ export function RatingInput({ value, onChange, size = 'lg' }) {
             className={cn(
               sizes[size],
               rating <= value
-                ? 'fill-violet-500 text-violet-500'
-                : 'fill-gray-200 text-gray-200 hover:text-violet-300'
+                ? colors.solid
+                : 'fill-gray-200 text-gray-200 hover:text-gray-300'
             )}
           />
         </button>

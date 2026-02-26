@@ -48,7 +48,7 @@ export function BrandLogo({ className, textClassName = 'text-xl font-bold' }) {
         <BrandMark className="h-9 w-9" />
       </span>
       <span className={cn('font-[family:var(--font-brand)] font-semibold tracking-tight', textClassName)}>
-        Surireviews
+        SuriReviews
       </span>
     </span>
   );

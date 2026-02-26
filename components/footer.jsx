@@ -60,7 +60,7 @@ export default function Footer({ variant = 'site', embedded = false, transparent
       <div className={contentClass}>
         <div className={isReview ? 'flex flex-col gap-2 text-sm text-slate-200' : 'flex flex-col gap-2 text-sm text-muted-foreground'}>
           <span className={isReview ? 'font-semibold text-white' : 'font-semibold text-foreground'}>
-            Surireviews
+            SuriReviews
           </span>
           <span className={isReview ? 'text-slate-200' : ''}>Trusted reviews for real businesses.</span>
         </div>

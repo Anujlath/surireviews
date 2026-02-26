@@ -1,4 +1,4 @@
-# Surireviews - Review Platform
+# SuriReviews - Review Platform
 
 A Trustpilot-style public review platform built with Next.js, featuring role-based access control, business profiles, and admin moderation.
 
