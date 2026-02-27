@@ -295,10 +295,13 @@ export default function BusinessPage() {
   ]
     .filter((part) => String(part || '').trim().length > 0)
     .join(', ');
+  const mapSearchQuery = [mapQuery, business.name]
+    .filter((part) => String(part || '').trim().length > 0)
+    .join(', ');
   const hasCoordinates = Number.isFinite(business.latitude) && Number.isFinite(business.longitude);
   const openMapHref = hasCoordinates
     ? `https://www.google.com/maps?q=${business.latitude},${business.longitude}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapSearchQuery)}`;
 
   return (
     <div className="container max-w-6xl space-y-6 py-6 md:py-8">
