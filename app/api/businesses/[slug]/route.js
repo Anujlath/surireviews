@@ -8,6 +8,7 @@ function normalize(value) {
 }
 
 function matchesCountry(countryValue, selectedCountry) {
+  if (!String(countryValue || '').trim()) return true;
   const terms = getCountryTerms(selectedCountry);
   if (!terms.length) return true;
   const source = normalize(countryValue);

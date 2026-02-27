@@ -287,18 +287,15 @@ export default function BusinessPage() {
     );
   }
 
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const mapQuery = business.location || business.name;
+  const mapQuery = [
+    business.location,
+    business.city,
+    business.state,
+    business.country,
+  ]
+    .filter((part) => String(part || '').trim().length > 0)
+    .join(', ');
   const hasCoordinates = Number.isFinite(business.latitude) && Number.isFinite(business.longitude);
-  const mapEmbedSrc = googleMapsApiKey
-    ? hasCoordinates
-      ? `https://www.google.com/maps/embed/v1/view?key=${encodeURIComponent(
-          googleMapsApiKey
-        )}&center=${business.latitude},${business.longitude}&zoom=13`
-      : `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(
-          googleMapsApiKey
-        )}&q=${encodeURIComponent(mapQuery)}`
-    : null;
   const openMapHref = hasCoordinates
     ? `https://www.google.com/maps?q=${business.latitude},${business.longitude}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
@@ -613,27 +610,16 @@ export default function BusinessPage() {
           <Card>
             <CardHeader>
               <CardTitle>Location</CardTitle>
-              {business.location && <CardDescription>{business.location}</CardDescription>}
+              {mapQuery && <CardDescription>{mapQuery}</CardDescription>}
             </CardHeader>
             <CardContent className="space-y-3">
-              {mapEmbedSrc ? (
-                <iframe
-                  title={`${business.name} location map`}
-                  src={mapEmbedSrc}
-                  loading="lazy"
-                  className="w-full h-56 rounded-md border"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              ) : (
-                <div className="text-sm text-muted-foreground rounded-md border p-4">
-                  Add `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` to `.env` to show an embedded map.
-                </div>
+              {(hasCoordinates || mapQuery) && (
+                <Button asChild variant="outline" className="w-full">
+                  <a href={openMapHref} target="_blank" rel="noopener noreferrer">
+                    Open in Google Maps
+                  </a>
+                </Button>
               )}
-              <Button asChild variant="outline" className="w-full">
-                <a href={openMapHref} target="_blank" rel="noopener noreferrer">
-                  Open in Google Maps
-                </a>
-              </Button>
             </CardContent>
           </Card>
 
